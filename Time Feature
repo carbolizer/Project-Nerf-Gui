@@ -1,0 +1,62 @@
+import time
+
+def quiz_game(difficulty):
+
+    # Create a timer for each question
+    timer = 10
+
+    # Start the game
+    score = 0
+    question_num = 0
+    while question_num < len(questions):
+        correct_answer = answers[question_num]
+        shuffled_options = shuffle_options(list(options[question_num]), correct_answer)
+
+        # Start the timer
+        start_time = time.time()
+
+        layout = [
+            [sg.Text(f"Question {question_num + 1}: {questions[question_num]}")],
+            [sg.Radio(f"{shuffled_options[0]}", 'Options', key=f'-A-{question_num}'),
+             sg.Radio(f"{shuffled_options[1]}", 'Options', key=f'-B-{question_num}')],
+            [sg.Radio(f"{shuffled_options[2]}", 'Options', key=f'-C-{question_num}'),
+             sg.Radio(f"{shuffled_options[3]}", 'Options', key=f'-D-{question_num}')],
+            [sg.Button('Submit Answer'), sg.Button('Next Question'), sg.Button('Quit')]
+        ]
+
+        window = sg.Window(f"{difficulty} Quiz", layout)
+
+        while True:
+            event, values = window.read(timeout=timer)
+
+            # Check if the timer has expired
+            if time.time() - start_time >= timer:
+                sg.popup("Time expired!", title="Result")
+                break
+
+            if event in (None, 'Quit', 'Exit'):
+                sg.popup("Quiz Ended", title="Result")
+                return
+
+            if event == 'Submit Answer':
+                selected_option = values.get(f'-A-{question_num}', False)
+                selected_option |= values.get(f'-B-{question_num}', False) << 1
+                selected_option |= values.get(f'-C-{question_num}', False) << 2
+                selected_option |= values.get(f'-D-{question_num}', False) << 3
+
+                if selected_option > 0:
+                    selected_answer = chr(ord('A') + selected_option - 1)
+                    if selected_answer == correct_answer:
+                        sg.popup("Correct!", title="Result")
+                        score += 1
+                    else:
+                        sg.popup(f"Incorrect! The correct answer is {correct_answer}", title="Result")
+                else:
+                    sg.popup("Please select an answer!", title="Result")
+
+            if event == 'Next Question':
+                window.close()
+                question_num += 1
+                break
+
+    sg.popup(f"Quiz Ended\nYour Score: {score}/{len(questions)}", title="Result")
